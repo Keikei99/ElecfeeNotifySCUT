@@ -1,0 +1,14 @@
+# 敏感/本地配置与状态文件，切勿提交
+# 忽略所有真实配置/订阅（dev、prods、以及旧的 config.yaml / subscriptions.yaml）
+config/*.yaml
+config/*.yml
+json/*.json
+log/*
+
+# 模板文件保留（可提交，供他人参考）
+!config/config.example.yaml
+
+__pycache__/
+*.pyc
+.DS_Store
+.claude

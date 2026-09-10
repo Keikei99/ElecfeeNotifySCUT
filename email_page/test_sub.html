@@ -1,0 +1,23 @@
+<!-- subject: ⚡电费助手 · 订阅测试 {{room_name}} -->
+<!--
+  订阅测试邮件模板（--test-sub 房间 邮箱）：验证「房间解析 -> 查询余额 -> 发到该邮箱」整条链路。
+  无论是否低于阈值都会发送。可用变量：
+    {{room_name}} 房间号  {{left_money}} 剩余充值(元)  {{left_ele}} 剩余充值(度)
+    {{left_free_money}} 剩余补助(元)  {{left_free_ele}} 剩余补助(度)
+    {{ele_price}} 单价(元/度)  {{mon_time}} 采集时间  {{email}} 收件邮箱  {{now}} 当前时间
+-->
+<div style="font-family:-apple-system,'PingFang SC',Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;color:#333;">
+  <div style="background:#43a047;color:#fff;padding:16px 20px;border-radius:8px 8px 0 0;">
+    <h2 style="margin:0;font-size:18px;">🧪 订阅测试成功</h2>
+  </div>
+  <div style="border:1px solid #eee;border-top:none;padding:20px;border-radius:0 0 8px 8px;">
+    <p style="font-size:15px;margin:0 0 12px;">已成功查询到房间 <strong>{{room_name}}</strong> 的电费，说明你对该房间的订阅链路正常。</p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <tr><td style="padding:6px 0;color:#888;">剩余充值</td><td style="text-align:right;font-weight:bold;">{{left_money}} 元 / {{left_ele}} 度</td></tr>
+      <tr><td style="padding:6px 0;color:#888;">剩余补助</td><td style="text-align:right;">{{left_free_money}} 元 / {{left_free_ele}} 度</td></tr>
+      <tr><td style="padding:6px 0;color:#888;">电费单价</td><td style="text-align:right;">{{ele_price}} 元/度</td></tr>
+      <tr><td style="padding:6px 0;color:#888;">采集时间</td><td style="text-align:right;">{{mon_time}}</td></tr>
+    </table>
+  </div>
+  <p style="color:#aaa;font-size:12px;text-align:center;margin-top:12px;">华工宿舍电费通知助手 · 发送给 {{email}}</p>
+</div>

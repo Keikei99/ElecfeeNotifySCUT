@@ -1,0 +1,17 @@
+<!-- subject: ⚠️电费助手：登录会话已失效，请重新登录 -->
+<!--
+  会话失效提醒（发给管理员）。可用变量：{{now}} 当前时间。
+-->
+<div style="font-family:-apple-system,'PingFang SC',Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;color:#333;">
+  <div style="background:#fb8c00;color:#fff;padding:16px 20px;border-radius:8px 8px 0 0;">
+    <h2 style="margin:0;font-size:18px;">⚠️ 会话已失效</h2>
+  </div>
+  <div style="border:1px solid #eee;border-top:none;padding:20px;border-radius:0 0 8px 8px;">
+    <p style="font-size:15px;margin:0 0 10px;">电费查询会话(JSESSIONID)已过期，暂时无法查询电费，预警已暂停。</p>
+    <p style="font-size:14px;margin:0;">请到运行主机执行：<br>
+      <code style="background:#f5f5f5;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:6px;">python3 src/main.py --login</code><br>
+      （输入二次认证验证码）以刷新会话。</p>
+    <p style="font-size:12px;color:#888;margin:12px 0 0;">时间：{{now}}</p>
+  </div>
+  <p style="color:#aaa;font-size:12px;text-align:center;margin-top:12px;">华工宿舍电费通知助手</p>
+</div>

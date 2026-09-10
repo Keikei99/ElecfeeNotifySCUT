@@ -1,0 +1,5 @@
+房间号,邮箱,阈值
+C1-101,alice@example.com,10
+C1-101,bob@example.com,5
+C1-102,carol@example.com,20
+C1-101,dave@example.com,15

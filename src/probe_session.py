@@ -27,13 +27,13 @@ try:
 except AttributeError:
     pass
 
-import yaml
+from config import ConfigError, load_config
 
 from scut_client import ScutClient, SessionExpired
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-CONFIG_PATH = os.path.join(PROJECT_ROOT, "config", "config.yaml")
+CONFIG_DIR = os.path.join(PROJECT_ROOT, "config")
 LOG_PATH = os.path.join(PROJECT_ROOT, "log", "probe.log")
 
 
@@ -55,7 +55,12 @@ def main():
     ap.add_argument("--keep-going", action="store_true", help="失效后继续探测，不退出")
     args = ap.parse_args()
 
-    cfg = yaml.safe_load(open(CONFIG_PATH, encoding="utf-8"))
+    try:
+        env, config_path, _, cfg = load_config(CONFIG_DIR)
+    except ConfigError as exc:
+        print(f"配置错误：{exc}", file=sys.stderr)
+        return 2
+    out(f"运行模式：{env}；配置：{config_path}")
     jsessionid = cfg["session"]["jsessionid"]
     client = ScutClient(jsessionid=jsessionid)
 

@@ -7,8 +7,10 @@ log/*
 
 # 模板文件保留（可提交，供他人参考）
 !config/config.example.yaml
+!config/subscriptions.example.yaml
 
 __pycache__/
 *.pyc
 .DS_Store
 .claude
+docs/

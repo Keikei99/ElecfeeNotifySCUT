@@ -47,6 +47,7 @@ import yaml
 from scut_client import ScutClient, SessionExpired
 from resolver import RoomResolver
 import notifier
+from config import ConfigError, load_config
 
 # 日志：统一走标准 logging。日志只写到 stdout，由系统 cron 的重定向
 # （如 `>> log/run.log 2>&1`）落盘，日志轮转交给操作系统（logrotate）处理，
@@ -72,21 +73,10 @@ PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 CONFIG_DIR = os.path.join(PROJECT_ROOT, "config")
 JSON_DIR = os.path.join(PROJECT_ROOT, "json")
 
-APP_ENV = os.getenv("ELECFEE_ENV", "dev").lower()   # dev / prod
-
-
-if APP_ENV == "dev":
-    # 开发环境
-    CONFIG_PATH = os.path.join(CONFIG_DIR, "config_dev.yaml")
-    SUBS_PATH = os.path.join(CONFIG_DIR, "subscriptions_dev.yaml")
-elif APP_ENV == "prod":
-    # 生产环境
-    CONFIG_PATH = os.path.join(CONFIG_DIR, "config_prods.yaml")
-    SUBS_PATH = os.path.join(CONFIG_DIR, "subscriptions_prods.yaml")
-else:
-    logger.warning(f"ELECFEE_ENV={APP_ENV} 未知，默认 dev")
-    CONFIG_PATH = os.path.join(CONFIG_DIR, "config_dev.yaml")
-    SUBS_PATH = os.path.join(CONFIG_DIR, "subscriptions_dev.yaml")
+# 解析命令行后加载，所有命令共享当前模式对应的路径。
+APP_ENV = None
+CONFIG_PATH = None
+SUBS_PATH = None
 
 STATE_PATH = os.path.join(JSON_DIR, "state.json")
 CACHE_PATH = os.path.join(JSON_DIR, "rooms_cache.json")
@@ -215,7 +205,7 @@ def run_once(config, subs, dry_run=False):
         logger.info(f"会话有效，账号：{u.get('realName')} ({u.get('studentNum')})")
     except SessionExpired as e:
         logger.error(f"❌ {e}")
-        logger.error("请运行 ELECFEE_ENV=prod python3 src/main.py --login 刷新会话，或更新 config.yaml 的 session.jsessionid。")
+        logger.error(f"请运行 python3 src/main.py --login 刷新会话，或更新 {CONFIG_PATH} 的 session.jsessionid。")
         notify_session_expired(config)
         return 2
 
@@ -325,7 +315,7 @@ def restore_home_room(client, config, resolver=None):
 
 
 def set_config_jsessionid(new_value):
-    """把新的 JSESSIONID 写回 config.yaml（文本替换，保留注释与格式）。"""
+    """把新的 JSESSIONID 写回当前模式的配置文件（文本替换，保留注释与格式）。"""
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         text = f.read()
     import re
@@ -333,7 +323,7 @@ def set_config_jsessionid(new_value):
         r'(?m)^(\s*jsessionid:\s*).*$',
         lambda m: f'{m.group(1)}"{new_value}"', text, count=1)
     if n == 0:
-        raise RuntimeError("未在 config.yaml 找到 session.jsessionid 行")
+        raise RuntimeError(f"未在 {CONFIG_PATH} 找到 session.jsessionid 行")
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         f.write(new_text)
 
@@ -344,7 +334,7 @@ def do_login(config):
     creds = config.get("credentials") or {}
     sid, pw = creds.get("student_id"), creds.get("password")
     if not sid or not pw:
-        logger.error("请先在 config/config.yaml 的 credentials 填写 student_id 和 password。")
+        logger.error(f"请先在 {CONFIG_PATH} 的 credentials 填写 student_id 和 password。")
         return 2
 
     def ask_code():
@@ -365,7 +355,7 @@ def do_login(config):
         return 2
 
     set_config_jsessionid(jsessionid)
-    logger.info(f"✅ 登录成功，新会话已写入 config.yaml（JSESSIONID 前8位 {jsessionid[:8]}…）")
+    logger.info(f"✅ 登录成功，新会话已写入 {CONFIG_PATH}（JSESSIONID 前8位 {jsessionid[:8]}…）")
     # 顺带校验一下
     client = ScutClient(jsessionid=jsessionid)
     u = client.userinfo()
@@ -727,7 +717,13 @@ def main():
     ap.add_argument("--list-subs", action="store_true", help="列出所有订阅")
     args = ap.parse_args()
 
-    config = load_yaml(CONFIG_PATH)
+    global APP_ENV, CONFIG_PATH, SUBS_PATH
+    try:
+        APP_ENV, CONFIG_PATH, SUBS_PATH, config = load_config(CONFIG_DIR)
+    except ConfigError as exc:
+        logger.error("配置错误：%s", exc)
+        return 2
+    logger.info("运行模式：%s；配置：%s；订阅：%s", APP_ENV, CONFIG_PATH, SUBS_PATH)
 
     if args.login:
         return do_login(config)

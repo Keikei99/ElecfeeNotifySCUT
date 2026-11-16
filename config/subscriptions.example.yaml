@@ -1,0 +1,13 @@
+# 订阅表模板：复制为 subscriptions_dev.yaml（开发）或 subscriptions_prods.yaml（生产）。
+# 每个房间可有多个订阅者；threshold 为最低通知金额（元）。
+# 请将示例房间和邮箱替换为自己的信息，也可用 main.py 的订阅管理命令维护。
+
+C1-101:
+  - email: alice@example.com
+    threshold: 10.0
+  - email: bob@example.com
+    threshold: 5.0
+
+C1-102:
+  - email: carol@example.com
+    threshold: 15.0

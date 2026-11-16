@@ -215,7 +215,7 @@ def run_once(config, subs, dry_run=False):
         logger.info(f"会话有效，账号：{u.get('realName')} ({u.get('studentNum')})")
     except SessionExpired as e:
         logger.error(f"❌ {e}")
-        logger.error("请运行 python3 src/main.py --login 刷新会话，或更新 config.yaml 的 session.jsessionid。")
+        logger.error("请运行 ELECFEE_ENV=prod python3 src/main.py --login 刷新会话，或更新 config.yaml 的 session.jsessionid。")
         notify_session_expired(config)
         return 2
 

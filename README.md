@@ -95,13 +95,16 @@ cp config/subscriptions.example.yaml config/subscriptions_dev.yaml # 填写开�
 python3 src/main.py --login
 ```
 
+登录成功后自动使用新会话执行一轮电费检查（等同于 `--once`，满足条件时会发送通知）；登录失败则退出。
+如需查询但不发送通知，可使用 `python3 src/main.py --login --dry-run`。
+
 ## 使用
 
 ```bash
 python3 src/main.py --check-room C1 101              # 临时查某房间余额（不发通知）
 python3 src/main.py --dry-run                        # 跑一轮但不真正发通知
 python3 src/main.py --once                           # 正式跑一轮（供 cron 调用）
-python3 src/main.py --login                          # 交互式登录，刷新会话（见上）
+python3 src/main.py --login                          # 交互式登录，刷新会话后执行一轮检查
 python3 src/main.py --keepalive                      # 会话保活（供 cron 每~20分钟调用）
 python3 src/main.py --test-email x@example.com       # 发测试邮件（省略则发给管理员邮箱）
 python3 src/main.py --test-sub C1-101 x@example.com  # 测试订阅：查询并发送测试邮件

@@ -6,7 +6,7 @@
   python3 src/main.py --once     # 同上，跑一轮
   python3 src/main.py --check-room C1 101    # 临时查某个房间的余额（不发通知）
   python3 src/main.py --dry-run  # 查询并判断，但不真正发通知（用于测试）
-  python3 src/main.py --login    # 交互式登录（含二次认证），刷新会话
+  python3 src/main.py --login    # 交互式登录（含二次认证），刷新会话后执行一轮检查
   python3 src/main.py --keepalive                     # 会话保活（供 cron 每~20分钟调用）
   python3 src/main.py --test-email x@example.com      # 发测试邮件（省略则发给管理员邮箱）
   python3 src/main.py --test-sub C1-101 x@example.com # 测试订阅：查该房间并把测试邮件发到该邮箱
@@ -699,7 +699,7 @@ def main():
     ap.add_argument("--check-room", nargs=2, metavar=("BUILDING", "ROOM"),
                     help="临时查询某房间余额，例如 --check-room C1 101")
     ap.add_argument("--login", action="store_true",
-                    help="交互式登录（含二次认证），刷新 config 里的 JSESSIONID")
+                    help="交互式登录（含二次认证），刷新会话后执行一轮检查")
     ap.add_argument("--keepalive", action="store_true",
                     help="会话保活：轻量探测一次以重置空闲计时（供 cron 每~20分钟调用）")
     ap.add_argument("--test-email", "--test", dest="test_email", nargs="?", const="",
@@ -726,7 +726,13 @@ def main():
     logger.info("运行模式：%s；配置：%s；订阅：%s", APP_ENV, CONFIG_PATH, SUBS_PATH)
 
     if args.login:
-        return do_login(config)
+        result = do_login(config)
+        if result != 0:
+            return result
+        # 登录会将新会话写入文件，重新读取以免本轮继续使用旧 JSESSIONID。
+        config = load_yaml(CONFIG_PATH)
+        logger.info("登录成功，开始执行一轮电费检查。")
+        return run_once(config, load_subs(), dry_run=args.dry_run)
     if args.keepalive:
         return do_keepalive(config)
     if args.list_subs:

@@ -107,8 +107,14 @@ class ConfigTests(unittest.TestCase):
 
                 with patch.object(main, "CONFIG_DIR", str(self.root)), patch.object(
                     sys, "argv", ["main.py", "--login"]
-                ), patch.object(main, "do_login", side_effect=fake_login):
+                ), patch.object(main, "do_login", side_effect=fake_login), patch.object(
+                    main, "run_once", return_value=0
+                ) as run_once:
                     self.assertEqual(main.main(), 0)
+                run_once.assert_called_once()
+                self.assertEqual(run_once.call_args.args[0]["session"]["jsessionid"], "new-session")
+                self.assertEqual(run_once.call_args.args[1], {})
+                self.assertEqual(run_once.call_args.kwargs, {"dry_run": False})
                 selected = (self.root / f"config_{suffix}.yaml").read_text()
                 self.assertIn('jsessionid: "new-session"', selected)
                 self.assertIn("# preserved comment", selected)
@@ -117,6 +123,27 @@ class ConfigTests(unittest.TestCase):
                 # Restore the fixture for the next mode.
                 (self.root / f"config_{suffix}.yaml").write_text(
                     f'# preserved comment\nsession:\n  jsessionid: "{suffix}"\n', encoding="utf-8")
+
+    def test_failed_login_skips_check(self):
+        self.entry.write_text("ELECFEE_ENV=prod\n", encoding="utf-8")
+        with patch.object(main, "CONFIG_DIR", str(self.root)), patch.object(
+            sys, "argv", ["main.py", "--login"]
+        ), patch.object(main, "do_login", return_value=2), patch.object(main, "run_once") as run_once:
+            self.assertEqual(main.main(), 2)
+            run_once.assert_not_called()
+
+    def test_login_check_respects_dry_run_and_returns_check_status(self):
+        self.entry.write_text("ELECFEE_ENV=prod\n", encoding="utf-8")
+        subs = {"C1-101": [{"email": "prod@example.com", "threshold": 10}]}
+        with patch.object(main, "CONFIG_DIR", str(self.root)), patch.object(
+            sys, "argv", ["main.py", "--login", "--dry-run"]
+        ), patch.object(main, "do_login", return_value=0), patch.object(
+            main, "load_subs", return_value=subs
+        ), patch.object(main, "run_once", return_value=1) as run_once:
+            self.assertEqual(main.main(), 1)
+            run_once.assert_called_once()
+            self.assertEqual(run_once.call_args.args[1], subs)
+            self.assertEqual(run_once.call_args.kwargs, {"dry_run": True})
 
     def test_entrypoints_reject_bad_mode_before_network(self):
         self.entry.write_text("ELECFEE_ENV=invalid\n", encoding="utf-8")

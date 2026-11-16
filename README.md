@@ -31,13 +31,12 @@ ElecfeeNotifySCUT/
 │   ├── probe_session.py         # 探测会话有效期
 │   └── run.sh                   # 命令行及 cron 调用入口
 ├── config/
-│   ├── config.example.yaml      # 配置模板，包含 env: dev
+│   ├── config.example.yaml      # 业务配置模板
 │   ├── subscriptions.example.yaml # 订阅表模板
-│   ├── config.yaml              # 模式入口：env: dev / prod（本地配置）
 │   ├── config_dev.yaml          # 开发业务配置（含密钥，勿提交）
-│   ├── config_prods.yaml        # 生产业务配置（含密钥，勿提交）
+│   ├── config_prod.yaml        # 生产业务配置（含密钥，勿提交）
 │   ├── subscriptions_dev.yaml   # 开发订阅表（勿提交）
-│   └── subscriptions_prods.yaml # 生产订阅表（勿提交）
+│   └── subscriptions_prod.yaml # 生产订阅表（勿提交）
 ├── email_page/                  # 预警、测试、订阅测试和会话失效邮件模板
 ├── csv/                         # 批量导入及批量测试的 CSV 示例
 ├── json/                        # 本地数据，勿提交
@@ -47,6 +46,8 @@ ElecfeeNotifySCUT/
 ├── log/                         # run.log、keepalive.log、probe.log 等日志
 ├── tests/
 │   └── test_config.py           # 配置选择和会话写回测试
+├── .env                        # 运行模式：ELECFEE_ENV=dev / prod（勿提交）
+├── .env.example                # 运行模式模板
 ├── requirements.txt             # Python 依赖
 ├── README.md
 └── LICENSE
@@ -57,11 +58,11 @@ ElecfeeNotifySCUT/
 
 ```bash
 pip install -r requirements.txt
-cp config/config.example.yaml config/config.yaml      # 模式入口，默认 dev
+cp .env.example .env                                 # 模式入口，默认 dev
 cp config/config.example.yaml config/config_dev.yaml  # 填写开发业务配置
 cp config/subscriptions.example.yaml config/subscriptions_dev.yaml # 填写开发订阅表
-# 生产部署：业务配置和订阅表分别复制为 config_prods.yaml、subscriptions_prods.yaml
-# 并将 config/config.yaml 的 env 改为 prod
+# 生产部署：业务配置和订阅表分别复制为 config_prod.yaml、subscriptions_prod.yaml
+# 并将根目录 .env 改为 ELECFEE_ENV=prod
 # 已有配置文件请直接编辑，不要用复制命令覆盖
 ```
 
@@ -69,22 +70,22 @@ cp config/subscriptions.example.yaml config/subscriptions_dev.yaml # 填写开�
 
 所有含敏感信息的配置都在 `config/` 目录下（已被 `.gitignore` 忽略）：
 
-- `config/config_prods.yaml`（或 `config_dev.yaml`）：填 `session.jsessionid`、`smtp`、
+- `config/config_prod.yaml`（或 `config_dev.yaml`）：填 `session.jsessionid`、`smtp`、
   默认阈值 `defaults.threshold_money`、查询节流 `check.query_interval` 等。
-- `config/subscriptions_prods.yaml`（或 `_dev`）：订阅表（用命令管理，见下）。
-- `config/config.example.yaml`：配置模板，包含默认模式 `env: dev`。
+- `config/subscriptions_prod.yaml`（或 `_dev`）：订阅表（用命令管理，见下）。
+- `config/config.example.yaml`：业务配置模板，不包含运行模式。
 - `config/subscriptions.example.yaml`：订阅表模板，复制后填写自己的房间、邮箱和阈值。
-- `config/config.yaml`：通过 `env` 切换当前模式：
+- 项目根目录 `.env`：通过 `ELECFEE_ENV` 切换当前模式：
 
-  ```yaml
-  env: prod  # 开发环境填写 dev
+  ```dotenv
+  ELECFEE_ENV=prod  # 开发环境填写 dev
   ```
 
-  启动先读取此文件，再按模式加载业务配置和订阅表；这里的其他字段不参与业务配置合并。
+  启动先读取根目录 `.env`，再按模式加载业务配置和订阅表；业务 YAML 中无需填写 `env`。
   `dev` 对应 `config_dev.yaml` / `subscriptions_dev.yaml`，
-  `prod` 对应 `config_prods.yaml` / `subscriptions_prods.yaml`（保留原有命名）。
-  不再读取 `ELECFEE_ENV`，无需在终端或 cron 中设置它。
-  入口、`env` 或业务配置缺失/无效时明确报错退出，不会自动切回开发模式。
+  `prod` 对应 `config_prod.yaml` / `subscriptions_prod.yaml`。
+  模式只以 `.env` 文件为准，无需在终端或 cron 中手动设置环境变量；进程中同名变量不覆盖文件。
+  `.env`、`ELECFEE_ENV` 或业务配置缺失/无效时明确报错退出，不会自动切回开发模式。
   订阅文件不存在时仍按空订阅处理，新增订阅时创建对应模式的文件。
   启动日志显示实际模式和文件路径；登录、保活、检查、订阅管理及会话探测使用同一模式。
 
@@ -117,7 +118,7 @@ python3 src/main.py --list-subs                      # 列出所有订阅
 ## 订阅（面向多用户，每人独立阈值）
 
 订阅按「房间 -> 多个 (邮箱, 阈值)」组织：同一房间可以有多个订阅者，**每人可设不同的最低通知阈值(元)**。
-推荐用命令管理（会写入当前模式对应的 `subscriptions_dev.yaml` 或 `subscriptions_prods.yaml`）：
+推荐用命令管理（会写入当前模式对应的 `subscriptions_dev.yaml` 或 `subscriptions_prod.yaml`）：
 
 ```bash
 python3 src/main.py --add-sub C1-101 alice@example.com 10 # Alice：余额<10元 提醒

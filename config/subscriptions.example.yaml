@@ -1,4 +1,4 @@
-# 订阅表模板：复制为 subscriptions_dev.yaml（开发）或 subscriptions_prods.yaml（生产）。
+# 订阅表模板：复制为 subscriptions_dev.yaml（开发）或 subscriptions_prod.yaml（生产）。
 # 每个房间可有多个订阅者；threshold 为最低通知金额（元）。
 # 请将示例房间和邮箱替换为自己的信息，也可用 main.py 的订阅管理命令维护。
 

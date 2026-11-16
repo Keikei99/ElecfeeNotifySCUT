@@ -1,9 +1,6 @@
-# 配置模板：复制为 config.yaml，通过 env 选择运行模式。
-# 同一模板也用于 config_dev.yaml（开发）或 config_prods.yaml（生产）的业务配置。
-# 仅 config.yaml 中的 env 用于选择模式；业务字段从对应模式的文件读取。
+# 业务配置模板：复制为 config_dev.yaml（开发）或 config_prod.yaml（生产）。
+# 运行模式在项目根目录 .env 的 ELECFEE_ENV 中选择。
 # 真实配置已被 .gitignore 忽略。
-
-env: dev  # dev / prod
 
 session:
   jsessionid: "在此粘贴登录后浏览器里的 JSESSIONID"

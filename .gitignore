@@ -1,5 +1,6 @@
 # 敏感/本地配置与状态文件，切勿提交
-# 忽略所有真实配置/订阅（dev、prods、以及旧的 config.yaml / subscriptions.yaml）
+# 忽略所有真实配置/订阅（dev、prod、以及旧的 config.yaml / subscriptions.yaml）
+.env
 config/*.yaml
 config/*.yml
 json/*.json
